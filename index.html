@@ -1,0 +1,276 @@
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+<div id="sticker-loader">
+  
+  <div class="loader-percentage-watermark">
+    <div class="track-window" id="digit-tens">
+      <div class="number-track" id="track-tens"></div>
+    </div>
+    <div class="track-window" id="digit-ones">
+      <div class="number-track" id="track-ones"></div>
+    </div>
+  </div>
+
+  <canvas id="stickerCanvas"></canvas>
+  
+  <div class="loader-ui-container">
+    <div class="loader-cta-mock">
+      W. <span>Visit Resource</span>
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* Reset and background */
+#sticker-loader {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: #f4f4f4; /* Clean off-white */
+  z-index: 999999;
+  opacity: 1; visibility: visible;
+  transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.8s;
+  pointer-events: auto;
+  user-select: none; overflow: hidden;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+#sticker-loader.fade-out {
+  opacity: 0; visibility: hidden; pointer-events: none;
+}
+
+#stickerCanvas {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; 
+  z-index: 10; /* Canvas sits ON TOP of the numbers */
+}
+
+/* UI Layout Grid */
+.loader-ui-container {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  padding: 40px;
+  pointer-events: none; z-index: 20;
+}
+
+/* CTA Mock (Bottom Center) */
+.loader-cta-mock {
+  position: absolute; 
+  bottom: 40px;
+  left: 50%; transform: translateX(-50%);
+  background: #111111; color: #ffffff;
+  padding: 12px 24px; border-radius: 40px;
+  font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px;
+  pointer-events: auto; 
+}
+.loader-cta-mock span { color: #b1f534; margin-left: 8px; }
+
+/* THE MASSIVE WATERMARK ODOMETER (Bottom Right) */
+/* Update ONLY this section in your CSS to restore the small size */
+
+.loader-percentage-watermark {
+  position: absolute;
+  bottom: 25px;       /* Padded nicely from the bottom corner */
+  right: 40px;        /* Tucked into the right corner */
+  display: flex; 
+  align-items: flex-start;
+  font-size: 3.5rem;  /* Dialed back to the compact, original size */
+  font-weight: 700;
+  color: #1a1a1a;     /* Restored to dark, readable text */
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  z-index: 5; 
+}
+
+/* Ensure the window size matches the new smaller font */
+.track-window {
+  height: 1em; 
+  overflow: hidden;
+  position: relative;
+  width: 0.6em;
+  display: flex; justify-content: center;
+}
+.number-track {
+  display: flex; flex-direction: column;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.number-track span {
+  height: 1em; 
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const canvas = document.getElementById('stickerCanvas');
+  const trackTens = document.getElementById('track-tens');
+  const trackOnes = document.getElementById('track-ones');
+  
+  if (!canvas || !trackTens || !trackOnes) return;
+  const ctx = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    ctx.scale(dpr, dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // 1. BUILD THE ROLLING HTML STRIPS
+  // Tens Strip (0-10)
+  for (let i = 0; i <= 10; i++) {
+    let span = document.createElement('span');
+    span.textContent = i;
+    trackTens.appendChild(span);
+  }
+
+  // Ones Strip (0-100)
+  for (let i = 0; i <= 100; i++) {
+    let span = document.createElement('span');
+    span.textContent = i % 10; 
+    trackOnes.appendChild(span);
+  }
+
+  // 2. STICKER IMAGES
+  const stickerURLs = [
+    'images/ChatGPT Image Jun 13, 2026, 05_53_42 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_02_04 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_05_19 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_08_45 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_10_56 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_12_56 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_15_15 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_17_12 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_19_03 PM.png',
+    'images/ChatGPT Image Jun 13, 2026, 06_20_56 PM.png',
+  ];
+
+  const stickerImages = [];
+  let loadedImagesCount = 0;
+  stickerURLs.forEach((url) => {
+    const img = new Image();
+    img.src = url;
+    img.onload = () => loadedImagesCount++;
+    stickerImages.push(img);
+  });
+
+  // 3. ENGINE VARIABLES
+  let activeStickers = [];
+  const maxStickers = 12;      
+  const spawnDistance = 40;    
+  const baseSize = 400;        
+  const mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  const lastMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  let stickerCounter = 0;
+  let idleTimer; 
+  let targetPercent = 0;
+
+  // 4. PROGRESS BAR LOADER
+  const progressInterval = setInterval(() => {
+    targetPercent += Math.floor(Math.random() * 12) + 6; 
+    if (targetPercent > 100) targetPercent = 100;
+    
+    // Calculate scroll depth
+    let tensIndex = Math.floor(targetPercent / 10);
+    let onesIndex = targetPercent; 
+
+    // Slide the tracks up by 0.85em per number
+    trackTens.style.transform = `translateY(-${tensIndex * 0.85}em)`;
+    trackOnes.style.transform = `translateY(-${onesIndex * 0.85}em)`;
+
+    if (targetPercent === 100) {
+      clearInterval(progressInterval);
+      setTimeout(() => {
+        const loader = document.getElementById('sticker-loader');
+        if (loader) loader.classList.add('fade-out');
+      }, 1000000);
+    }
+  }, 350); 
+
+  // 5. STICKER TRAIL INTERACTION
+  window.addEventListener('mousemove', (event) => {
+    mouse.x = event.clientX;
+    mouse.y = event.clientY;
+
+    if (loadedImagesCount !== stickerURLs.length) return;
+    clearTimeout(idleTimer);
+    
+    if (activeStickers.length > 0) activeStickers[activeStickers.length - 1].targetScale = 1.0;
+
+    const dx = mouse.x - lastMouse.x;
+    const dy = mouse.y - lastMouse.y;
+    if (Math.sqrt(dx * dx + dy * dy) > spawnDistance) {
+      spawnSticker(mouse.x, mouse.y);
+      lastMouse.x = mouse.x;
+      lastMouse.y = mouse.y;
+    }
+    idleTimer = setTimeout(collapseTrail, 150);
+  });
+
+  function spawnSticker(x, y) {
+    activeStickers.push({
+      x: x, y: y,
+      imageIndex: stickerCounter % stickerURLs.length,
+      angle: ((Math.random() * 36 - 18) * Math.PI) / 180, 
+      scale: 0.1, targetScale: 1.0, opacity: 1.0
+    });
+    stickerCounter++;
+
+    if (activeStickers.length > maxStickers) {
+      for (let i = 0; i < activeStickers.length - maxStickers; i++) activeStickers[i].targetScale = 0; 
+    }
+  }
+
+  function collapseTrail() {
+    if (activeStickers.length <= 1) return;
+    for (let i = 0; i < activeStickers.length - 1; i++) activeStickers[i].targetScale = 0; 
+  }
+
+  function lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
+
+  // 6. CANVAS RENDER LOOP
+  function animate() {
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    if (activeStickers.length > 0) {
+      const headIndex = activeStickers.length - 1;
+      activeStickers[headIndex].x = lerp(activeStickers[headIndex].x, mouse.x, 0.45);
+      activeStickers[headIndex].y = lerp(activeStickers[headIndex].y, mouse.y, 0.45);
+
+      for (let i = headIndex - 1; i >= 0; i--) {
+        activeStickers[i].x = lerp(activeStickers[i].x, activeStickers[i + 1].x, 0.26);
+        activeStickers[i].y = lerp(activeStickers[i].y, activeStickers[i + 1].y, 0.26);
+      }
+    } else if (loadedImagesCount === stickerURLs.length && stickerCounter === 0) {
+      spawnSticker(mouse.x, mouse.y);
+    }
+
+    activeStickers = activeStickers.filter(stk => stk.scale > 0.01 || stk.targetScale > 0);
+
+    for (let i = 0; i < activeStickers.length; i++) {
+      const stk = activeStickers[i];
+      const img = stickerImages[stk.imageIndex];
+      
+      stk.scale = lerp(stk.scale, stk.targetScale, 0.15);
+      if (stk.targetScale === 0) stk.opacity = lerp(stk.opacity, 0, 0.15);
+
+      const finalSize = baseSize * stk.scale;
+      ctx.save();
+      ctx.globalAlpha = stk.opacity;
+      ctx.translate(stk.x, stk.y);
+      ctx.rotate(stk.angle);
+      ctx.drawImage(img, -finalSize / 2, -finalSize / 2, finalSize, finalSize);
+      ctx.restore();
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+});
+</script>
