@@ -10,6 +10,12 @@ A high-performance, aesthetic loading screen built for modern web applications. 
 *   **Responsive Design:** Fully fluid layout using `clamp()` and `vw/vh` units to ensure it looks sharp on any screen size.
 *   **Performance Optimized:** Uses `requestAnimationFrame` for the sticker engine and CSS hardware-accelerated transforms for the counter.
 
+  
+
+https://github.com/user-attachments/assets/40bcd9bf-95db-4a78-b5f3-eac5af414532
+
+
+
 ## 🛠 Tech Stack
 
 *   **HTML5 / CSS3:** Modern Flexbox layout and CSS animations.
@@ -28,7 +34,11 @@ A high-performance, aesthetic loading screen built for modern web applications. 
 *   **Stickers:** Modify the `stickerURLs` array in the script to point to your own transparent SVG or PNG assets.
 *   **Speed:** Adjust the `progressInterval` in the JavaScript to match your actual asset loading time or API response time.
 *   **Aesthetic:** The rolling tracks are built by generating 100 span elements dynamically—if you need to change the font, simply update the `font-family` on the `.loader-percentage-watermark` class.
+*   Change the time interval for percentage loader according to the loading time of your wwebsite. It is predefined set to value 1000000 for trail use.
 
-## 📝 License
+
+
 
 This project is open-source. Feel free to use the sticker trail logic in your own production environments.
+When integrating in our on production environments change the tme inverval value in `progressInterval` section according to your use...
+
