@@ -195,13 +195,13 @@ document.addEventListener("DOMContentLoaded", function() {
   }, 350); 
 
   // 5. STICKER TRAIL INTERACTION
-  window.addEventListener('mousemove', (event) => {
-    mouse.x = event.clientX;
-    mouse.y = event.clientY;
+  function handlePointerMove(x, y) {
+    mouse.x = x;
+    mouse.y = y;
 
     if (loadedImagesCount !== stickerURLs.length) return;
     clearTimeout(idleTimer);
-    
+
     if (activeStickers.length > 0) activeStickers[activeStickers.length - 1].targetScale = 1.0;
 
     const dx = mouse.x - lastMouse.x;
@@ -212,6 +212,37 @@ document.addEventListener("DOMContentLoaded", function() {
       lastMouse.y = mouse.y;
     }
     idleTimer = setTimeout(collapseTrail, 150);
+  }
+
+  window.addEventListener('mousemove', (event) => {
+    handlePointerMove(event.clientX, event.clientY);
+  });
+
+  window.addEventListener('touchstart', (event) => {
+    if (!event.touches || event.touches.length === 0) return;
+    event.preventDefault();
+    const touch = event.touches[0];
+    lastMouse.x = touch.clientX;
+    lastMouse.y = touch.clientY;
+    spawnSticker(touch.clientX, touch.clientY);
+    handlePointerMove(touch.clientX, touch.clientY);
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (event) => {
+    if (!event.touches || event.touches.length === 0) return;
+    event.preventDefault();
+    const touch = event.touches[0];
+    handlePointerMove(touch.clientX, touch.clientY);
+  }, { passive: false });
+
+  window.addEventListener('touchend', () => {
+    clearTimeout(idleTimer);
+    collapseTrail();
+  });
+
+  window.addEventListener('touchcancel', () => {
+    clearTimeout(idleTimer);
+    collapseTrail();
   });
 
   function spawnSticker(x, y) {
