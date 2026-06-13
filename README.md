@@ -2,6 +2,8 @@
 
 A high-performance, aesthetic loading screen built for modern web applications. Featuring a mechanical "odometer-style" rolling percentage counter and an interactive, physics-based sticker trail.
 
+https://giridhar16-03.github.io/sticker_trail_loader/
+
 ## 🚀 Features
 
 *   **Mechanical Rolling Counter:** A smooth, odometer-style number animation that "rolls" to the next digit using CSS `cubic-bezier` transitions.
